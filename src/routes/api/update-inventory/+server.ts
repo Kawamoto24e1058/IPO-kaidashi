@@ -17,7 +17,7 @@ export async function POST({ request }: RequestEvent) {
 				await notion.pages.update({
 					page_id: update.id,
 					properties: {
-						在庫数: {
+						現在庫: {
 							number: update.newStock
 						}
 					}

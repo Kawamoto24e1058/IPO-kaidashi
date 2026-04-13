@@ -34,9 +34,9 @@ export async function load() {
 
 		// 取得したデータをアプリ用に整形
 		const items = response.results.map((page: any) => {
-			const stock = getProp(page, '在庫数')?.number ?? 0;
-			const targetStock = getProp(page, '買い出し点')?.number ?? 0;
-			const name = getProp(page, '商品名')?.title?.[0]?.plain_text ?? '名前なし';
+			const stock = getProp(page, '現在庫')?.number ?? 0;
+			const targetStock = getProp(page, 'スーパー買い物点')?.number ?? 0;
+			const name = getProp(page, '原材料名')?.title?.[0]?.plain_text ?? '名前なし';
 			const unit = getProp(page, '単位')?.select?.name ?? '';
 			const barcode = getProp(page, 'バーコード')?.rich_text?.[0]?.plain_text ?? '';
 			const capacity = getProp(page, '内容量')?.number ?? 1;
