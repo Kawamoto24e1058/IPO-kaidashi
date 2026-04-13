@@ -17,7 +17,7 @@ export async function POST({ request }: RequestEvent) {
 				await notion.pages.update({
 					page_id: update.id,
 					properties: {
-						'在庫数 ⓘ': {
+						在庫数: {
 							number: update.newStock
 						}
 					}
@@ -26,8 +26,11 @@ export async function POST({ request }: RequestEvent) {
 		);
 
 		return json({ success: true });
-	} catch (error) {
+	} catch (error: any) {
 		console.error('Failed to update Notion inventory:', error);
+		if (error?.code === 'validation_error') {
+			return json({ success: false, error: 'Notionプロパティ名の設定を確認してください（validation_error）' }, { status: 400 });
+		}
 		return json({ success: false, error: 'Failed to update' }, { status: 500 });
 	}
 }
