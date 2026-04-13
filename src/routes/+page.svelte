@@ -104,11 +104,28 @@
 		// DOMマウントを待つ
 		setTimeout(() => {
 			html5QrCode = new Html5Qrcode('qr-reader');
-			html5QrCode.start(
-				{ facingMode: 'environment' },
-				{
-					fps: 10
+			const config = {
+				fps: 20,
+				qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+					// 画面の幅に合わせてスキャンボックスを動的に設定
+					const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
+					const qrboxSize = Math.floor(minEdgeSize * 0.7);
+					return {
+						width: Math.min(400, Math.floor(viewfinderWidth * 0.8)),
+						height: Math.min(250, Math.floor(qrboxSize * 0.6)) // 一般的なバーコード向けに横長に
+					};
 				},
+				videoConstraints: {
+					facingMode: 'environment',
+					width: { min: 640, ideal: 1280, max: 1920 },
+					height: { min: 480, ideal: 720, max: 1080 },
+					focusMode: 'continuous'
+				}
+			};
+
+			html5QrCode.start(
+				config.videoConstraints,
+				config,
 				onScanSuccess,
 				(err) => {
 					// 継続的なスキャンエラーは無視
