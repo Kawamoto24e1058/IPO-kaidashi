@@ -28,21 +28,24 @@ export async function load() {
 		}
 
 		const getProp = (page: any, keyword: string) => {
-			const key = Object.keys(page.properties).find((k) => k.includes(keyword));
+			const key = Object.keys(page.properties).find((k) => k === keyword || k.includes(keyword));
 			return key ? page.properties[key] : undefined;
 		};
 
 		// 取得したデータをアプリ用に整形
 		const items = response.results.map((page: any) => {
-			const stock = getProp(page, '現在庫')?.number ?? 0;
-			const targetStock = getProp(page, 'スーパー買い物点')?.number ?? 0;
+			const stockProp = getProp(page, '現在庫');
+			const targetProp = getProp(page, 'スーパー買い物点');
+			
+			const stock = Number(stockProp?.number || 0);
+			const targetStock = Number(targetProp?.number || 0);
 			const name = getProp(page, '原材料名')?.title?.[0]?.plain_text ?? '名前なし';
 			const unit = getProp(page, '単位')?.select?.name ?? '';
 			const barcode = getProp(page, 'バーコード')?.rich_text?.[0]?.plain_text ?? '';
-			const capacity = getProp(page, '内容量')?.number ?? 1;
+			const capacity = Number(getProp(page, '内容量')?.number || 1);
 
-			// デバッグ用ログ（取得できた数値を確認）
-			console.log(`[Item] ${name} | 在庫: ${stock} / 目標: ${targetStock}`);
+			// デバッグ用ログ（取得できた生データと変換後の数値を確認）
+			console.log(`[Item Debug] ${name}: 現在庫(raw)=${stockProp?.number}, 買い物点(raw)=${targetProp?.number} -> stock=${stock}, target=${targetStock}`);
 
 			const isNeeded = stock < targetStock;
 
