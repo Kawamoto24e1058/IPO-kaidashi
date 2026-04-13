@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
+	import { authState } from '$lib/auth.svelte';
 	import type { PageData } from './$types';
 	import { onMount, onDestroy } from 'svelte';
 	import { Html5Qrcode } from 'html5-qrcode';
@@ -460,21 +461,37 @@
 	</div>
 
 	<div class="mx-auto max-w-md space-y-6 p-6">
-		<div class="flex items-baseline justify-between mb-8 mt-4">
-			<h1 class="pl-1 text-3xl font-semibold">在庫管理</h1>
-			<button 
-				onclick={refreshData}
-				disabled={isManualRefreshing}
-				class="group flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm transition-all active:scale-90 active:bg-gray-50"
-				aria-label="更新"
-			>
-				<svg 
-					class="h-5 w-5 text-[#1D1D1F] {isManualRefreshing ? 'animate-spin' : 'group-hover:rotate-45 transition-transform'}" 
-					fill="none" viewBox="0 0 24 24" stroke="currentColor"
+		<div class="flex items-center justify-between mb-8 mt-4">
+			<div class="flex flex-col pl-1">
+				<h1 class="text-3xl font-semibold">在庫管理</h1>
+				{#if authState.user}
+					<span class="text-xs text-[#86868B] font-medium">{authState.user.displayName || authState.user.email}</span>
+				{/if}
+			</div>
+			<div class="flex items-center gap-3">
+				<button 
+					onclick={refreshData}
+					disabled={isManualRefreshing}
+					class="group flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm transition-all active:scale-90 active:bg-gray-50"
+					aria-label="更新"
 				>
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-				</svg>
-			</button>
+					<svg 
+						class="h-5 w-5 text-[#1D1D1F] {isManualRefreshing ? 'animate-spin' : 'group-hover:rotate-45 transition-transform'}" 
+						fill="none" viewBox="0 0 24 24" stroke="currentColor"
+					>
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+					</svg>
+				</button>
+				<button 
+					onclick={() => authState.logout()}
+					class="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm transition-all active:scale-90 active:bg-rose-50 group"
+					aria-label="ログアウト"
+				>
+					<svg class="h-5 w-5 text-[#86868B] group-hover:text-rose-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+					</svg>
+				</button>
+			</div>
 		</div>
 
 		<!-- タブナビゲーション -->
@@ -676,7 +693,7 @@
 
 	<!-- スキャナーオーバーレイ -->
 	{#if isScanning}
-		<div class="fixed inset-0 z-[150] flex flex-col bg-black/90 backdrop-blur-sm">
+		<div class="fixed inset-0 z-150 flex flex-col bg-black/90 backdrop-blur-sm">
 			<div class="flex items-center justify-between p-6 pb-2">
 				<h2 class="text-xl font-medium text-white">バーコードスキャン</h2>
 				<button
