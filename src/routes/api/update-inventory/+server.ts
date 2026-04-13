@@ -1,12 +1,10 @@
 import { json } from '@sveltejs/kit';
 import { Client } from '@notionhq/client';
-import { NOTION_API_KEY } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import type { RequestEvent } from './$types';
-
-const notion = new Client({ auth: NOTION_API_KEY });
-
 export async function POST({ request }: RequestEvent) {
 	try {
+		const notion = new Client({ auth: env.NOTION_API_KEY });
 		const { updates } = await request.json();
 
 		if (!Array.isArray(updates) || updates.length === 0) {
@@ -19,7 +17,7 @@ export async function POST({ request }: RequestEvent) {
 				await notion.pages.update({
 					page_id: update.id,
 					properties: {
-						在庫数: {
+						'在庫数 ⓘ': {
 							number: update.newStock
 						}
 					}

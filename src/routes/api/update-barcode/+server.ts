@@ -1,12 +1,10 @@
 import { json } from '@sveltejs/kit';
 import { Client } from '@notionhq/client';
-import { NOTION_API_KEY } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import type { RequestEvent } from './$types';
-
-const notion = new Client({ auth: NOTION_API_KEY });
-
 export async function POST({ request }: RequestEvent) {
 	try {
+		const notion = new Client({ auth: env.NOTION_API_KEY });
 		const { id, barcode } = await request.json();
 
 		if (!id || !barcode) {

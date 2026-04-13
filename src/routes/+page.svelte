@@ -10,7 +10,7 @@
 
 
 	let { data }: { data: PageData } = $props();
-	let shoppingItems = $derived((data.items || []).filter(i => i.needsShopping));
+	let shoppingList = $derived((data.allItems || []).filter(i => i.isNeeded));
 
 	// 入力された「今回買った量」をIDをキーにして保持
 	let buyAmounts: Record<string, number> = $state({});
@@ -57,7 +57,7 @@
 		const updates = Object.entries(buyAmounts)
 			.filter(([_, amount]) => amount && amount > 0)
 			.map(([id, amount]) => {
-				const item = data.items.find((i: any) => i.id === id);
+				const item = data.allItems.find((i: any) => i.id === id);
 				return {
 					id,
 					newStock: (item?.stock || 0) + amount
@@ -155,7 +155,7 @@
 		if (popupFeedback.type || isRegisteringModalOpen) return; // アニメーション中やモーダル表示中は無視
 
 		// マッチする商品を探す
-		const matchedItem = data.items.find((i: any) => i.barcode === decodedText);
+		const matchedItem = data.allItems.find((i: any) => i.barcode === decodedText);
 
 		if (matchedItem) {
 			// 一致した場合（照合成功）
@@ -189,9 +189,9 @@
 			});
 
 			if (res.ok) {
-				const itemIndex = data.items.findIndex((i: any) => i.id === selectedItemIdForBinding);
+				const itemIndex = data.allItems.findIndex((i: any) => i.id === selectedItemIdForBinding);
 				if (itemIndex !== -1) {
-					data.items[itemIndex].barcode = unregisteredBarcode;
+					data.allItems[itemIndex].barcode = unregisteredBarcode;
 				}
 
 				isRegisteringModalOpen = false;
@@ -226,18 +226,21 @@
 		<h1 class="mb-8 mt-4 pl-1 text-3xl font-semibold">買い出しリスト</h1>
 
 		<div class="space-y-4">
-			{#if !data.items || data.items.length === 0}
+			{#if !data.allItems || data.allItems.length === 0}
 				<div class="mt-10 text-center text-[#86868B]">
 					データが読み込めませんでした。<br />環境変数の設定を確認してください。
 				</div>
-			{:else if shoppingItems.length === 0}
+			{:else if shoppingList.length === 0}
 				<div class="mt-10 text-center text-[#86868B]">
 					現在、買い出しが必要な商品はありません。<br />
 					<span class="text-xs">※ 在庫が十分な商品もスキャンしてバーコード登録が可能です。</span>
+					<div class="mt-4 rounded-lg bg-red-50 p-2 text-xs text-red-500 font-mono">
+						デバッグ: 全取得データ数 = {data.allItems?.length || 0}
+					</div>
 				</div>
 			{/if}
 
-			{#each shoppingItems as item (item.id)}
+			{#each shoppingList as item (item.id)}
 				{@const currentAdded = buyAmounts[item.id] || 0}
 				{@const displayStock = item.stock + currentAdded}
 				{@const shortage = Math.max(0, item.targetStock - displayStock)}
@@ -390,7 +393,7 @@
 										class="w-full appearance-none rounded-xl bg-[#F5F5F7] px-4 py-3 pr-10 text-[15px] font-medium outline-none focus:ring-2 focus:ring-[#0071E3]/50"
 									>
 										<option value="" disabled selected>選択してください</option>
-										{#each data.items as item (item.id)}
+										{#each data.allItems as item (item.id)}
 											<option value={item.id}>{item.name}</option>
 										{/each}
 									</select>
