@@ -18,17 +18,9 @@ export async function load() {
 			throw new Error('データベース内に有効なデータソースが見つかりませんでした。');
 		}
 
-		// 2. 特定したデータソースに対してクエリを実行
+		// 2. 特定したデータソースに対してクエリを実行（全件取得）
 		const response = await notion.dataSources.query({
-			data_source_id: dataSourceId,
-			filter: {
-				property: '買い出し必要',
-				formula: {
-					checkbox: {
-						equals: true
-					}
-				}
-			}
+			data_source_id: dataSourceId
 		});
 
 		// 取得したデータをアプリ用に整形
@@ -41,7 +33,8 @@ export async function load() {
 				unit: page.properties['単位']?.select?.name || '',
 				targetStock: page.properties['買い出し点']?.number || 0,
 				barcode: page.properties['バーコード']?.rich_text?.[0]?.plain_text || '',
-				capacity: page.properties['内容量']?.number || 1
+				capacity: page.properties['内容量']?.number || 1,
+				needsShopping: page.properties['買い出し必要']?.formula?.checkbox || false
 			};
 		});
 

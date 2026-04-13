@@ -10,6 +10,7 @@
 
 
 	let { data }: { data: PageData } = $props();
+	let shoppingItems = $derived((data.items || []).filter(i => i.needsShopping));
 
 	// 入力された「今回買った量」をIDをキーにして保持
 	let buyAmounts: Record<string, number> = $state({});
@@ -227,10 +228,16 @@
 		<div class="space-y-4">
 			{#if !data.items || data.items.length === 0}
 				<div class="mt-10 text-center text-[#86868B]">
-					データがありません。<br />環境変数の設定を確認してください。
+					データが読み込めませんでした。<br />環境変数の設定を確認してください。
+				</div>
+			{:else if shoppingItems.length === 0}
+				<div class="mt-10 text-center text-[#86868B]">
+					現在、買い出しが必要な商品はありません。<br />
+					<span class="text-xs">※ 在庫が十分な商品もスキャンしてバーコード登録が可能です。</span>
 				</div>
 			{/if}
-			{#each data.items || [] as item (item.id)}
+
+			{#each shoppingItems as item (item.id)}
 				{@const currentAdded = buyAmounts[item.id] || 0}
 				{@const displayStock = item.stock + currentAdded}
 				{@const shortage = Math.max(0, item.targetStock - displayStock)}
