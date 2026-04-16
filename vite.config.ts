@@ -13,6 +13,8 @@ export default defineConfig({
 				name: 'IPO在庫管理',
 				short_name: 'IPO在庫',
 				description: 'IPO在庫管理アプリ',
+				start_url: '/',
+				scope: '/',
 				theme_color: '#ffffff',
 				background_color: '#ffffff',
 				display: 'standalone',

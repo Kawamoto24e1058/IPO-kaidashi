@@ -4,6 +4,7 @@
 	import { authState } from '$lib/auth.svelte';
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
+	import { goto } from '$app/navigation';
 
 	let { children } = $props();
 
@@ -16,9 +17,9 @@
 		untrack(() => {
 			if (!loading) {
 				if (!authenticated && !isLoginPage) {
-					window.location.href = '/login';
+					goto('/login');
 				} else if (authenticated && isLoginPage) {
-					window.location.href = '/';
+					goto('/');
 				}
 			}
 		});
