@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { initializeAuth, browserLocalPersistence, getAuth, GoogleAuthProvider } from 'firebase/auth';
 
 const firebaseConfig = {
 	apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -12,7 +12,21 @@ const firebaseConfig = {
 
 // Singleton pattern for Firebase initialization
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
+
+// iOS PWA の Storage Partitioning 対策:
+// sessionStorage は ITP により cross-context でアクセス不可のため
+// browserLocalPersistence (localStorage) を明示的に指定する
+// initializeAuth は1度しか呼べないため try/catch でガード
+let auth;
+try {
+	auth = initializeAuth(app, {
+		persistence: browserLocalPersistence
+	});
+} catch {
+	// すでに初期化済みの場合は既存インスタンスを取得
+	auth = getAuth(app);
+}
+
 const googleProvider = new GoogleAuthProvider();
 
 export { app, auth, googleProvider };

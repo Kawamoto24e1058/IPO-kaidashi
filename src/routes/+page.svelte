@@ -314,7 +314,6 @@
 			const matchedItem = shoppingList.find((i: any) => i.barcode === decodedText);
 			if (matchedItem) {
 				if (navigator.vibrate) navigator.vibrate(50);
-				if (html5QrCode) html5QrCode.pause(true);
 				scannedMatchedItem = matchedItem;
 			} else {
 				if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
@@ -333,7 +332,6 @@
 				showPopup('warning', `登録済みです\n${matchedItem.name}`);
 			} else {
 				if (navigator.vibrate) navigator.vibrate(50);
-				if (html5QrCode) html5QrCode.pause(true);
 				unregisteredBarcode = decodedText;
 				selectedItemIdForBinding = '';
 				isRegisteringModalOpen = true;

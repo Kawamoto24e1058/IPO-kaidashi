@@ -1,8 +1,29 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { auth } from '$lib/firebase';
+	import { getRedirectResult } from 'firebase/auth';
 	import { authState } from '$lib/auth.svelte';
 	import { fly } from 'svelte/transition';
 
 	let isLoggingIn = $state(false);
+	let redirectError = $state('');
+
+	onMount(async () => {
+		try {
+			const result = await getRedirectResult(auth);
+			if (result?.user) {
+				goto('/');
+			}
+		} catch (error: any) {
+			// storage-partitioned 環境での "missing initial state" などは
+			// 再試行を促すだけでアプリは続行できる
+			if (error?.code !== 'auth/invalid-auth-event') {
+				console.error('Redirect result error:', error);
+				redirectError = 'ログインに失敗しました。もう一度お試しください。';
+			}
+		}
+	});
 
 	async function handleLogin() {
 		isLoggingIn = true;
@@ -34,6 +55,10 @@
 
 		<h1 class="mb-2 text-3xl font-bold tracking-tight">IPO-kaidashi</h1>
 		<p class="mb-12 text-[#86868B]">サインインして在庫管理を始めましょう</p>
+
+		{#if redirectError}
+			<p class="mb-4 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-600">{redirectError}</p>
+		{/if}
 
 		<button
 			onclick={handleLogin}

@@ -1,5 +1,5 @@
 import { auth, googleProvider } from './firebase';
-import { signInWithPopup, signOut, type User } from 'firebase/auth';
+import { signInWithRedirect, signOut, type User } from 'firebase/auth';
 import { goto } from '$app/navigation';
 
 class AuthState {
@@ -21,7 +21,7 @@ class AuthState {
 
 	async login() {
 		try {
-			await signInWithPopup(auth, googleProvider);
+			await signInWithRedirect(auth, googleProvider);
 		} catch (error) {
 			console.error('Login failed:', error);
 			throw error;
