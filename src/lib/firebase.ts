@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { initializeAuth, browserLocalPersistence, getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { initializeAuth, browserLocalPersistence, browserPopupRedirectResolver, getAuth, GoogleAuthProvider } from 'firebase/auth';
 
 const firebaseConfig = {
 	apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -20,7 +20,8 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 let auth;
 try {
 	auth = initializeAuth(app, {
-		persistence: browserLocalPersistence
+		persistence: browserLocalPersistence,
+		popupRedirectResolver: browserPopupRedirectResolver
 	});
 } catch {
 	// すでに初期化済みの場合は既存インスタンスを取得
