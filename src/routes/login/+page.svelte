@@ -1,23 +1,8 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
-	import { auth } from '$lib/firebase';
-	import { getRedirectResult } from 'firebase/auth';
 	import { authState } from '$lib/auth.svelte';
-	import { fade, fly } from 'svelte/transition';
+	import { fly } from 'svelte/transition';
 
 	let isLoggingIn = $state(false);
-
-	onMount(async () => {
-		try {
-			const result = await getRedirectResult(auth);
-			if (result?.user) {
-				goto('/');
-			}
-		} catch (error) {
-			console.error('Redirect result error:', error);
-		}
-	});
 
 	async function handleLogin() {
 		isLoggingIn = true;
