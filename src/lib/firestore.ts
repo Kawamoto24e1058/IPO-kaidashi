@@ -21,6 +21,24 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 
+// Firebase 設定が揃っているか確認（未設定時はFirestore操作をスキップ）
+function isConfigured(): boolean {
+	return !!(
+		import.meta.env.VITE_FIREBASE_PROJECT_ID &&
+		import.meta.env.VITE_FIREBASE_API_KEY
+	);
+}
+
+// Firestoreの操作にタイムアウトを付ける（デフォルト4秒）
+function withTimeout<T>(promise: Promise<T>, ms = 4000): Promise<T> {
+	return Promise.race([
+		promise,
+		new Promise<T>((_, reject) =>
+			setTimeout(() => reject(new Error(`Firestore timeout after ${ms}ms`)), ms)
+		)
+	]);
+}
+
 // ─── 型 ──────────────────────────────────────────────
 
 export type InventoryItem = {
@@ -51,12 +69,15 @@ export type MasterItem = {
  * 失敗しても例外を上に伝播させず、ログのみ出す。
  */
 export async function backupInventory(items: InventoryItem[]): Promise<void> {
+	if (!isConfigured()) return;
 	try {
-		await setDoc(doc(db, 'inventory_backup', 'latest'), {
-			items,
-			updatedAt: serverTimestamp(),
-			source: 'notion'
-		});
+		await withTimeout(
+			setDoc(doc(db, 'inventory_backup', 'latest'), {
+				items,
+				updatedAt: serverTimestamp(),
+				source: 'notion'
+			})
+		);
 	} catch (e) {
 		console.warn('[Firestore] inventory backup failed:', e);
 	}
@@ -70,8 +91,9 @@ export async function getInventoryBackup(): Promise<{
 	items: InventoryItem[];
 	updatedAt: Date | null;
 } | null> {
+	if (!isConfigured()) return null;
 	try {
-		const snap = await getDoc(doc(db, 'inventory_backup', 'latest'));
+		const snap = await withTimeout(getDoc(doc(db, 'inventory_backup', 'latest')));
 		if (!snap.exists()) return null;
 		const data = snap.data();
 		return {
@@ -90,14 +112,15 @@ export async function getInventoryBackup(): Promise<{
  * 指定コレクションのマスターアイテムを全件取得する。
  */
 export async function getMasterItems(collectionName: string): Promise<MasterItem[]> {
+	if (!isConfigured()) return [];
 	try {
 		const q = query(collection(db, collectionName), orderBy('createdAt', 'asc'));
-		const snap = await getDocs(q);
+		const snap = await withTimeout(getDocs(q));
 		return snap.docs.map((d) => ({ id: d.id, ...d.data() } as MasterItem));
 	} catch (e) {
 		// orderBy が使えない（インデックスなし）場合はフォールバック
 		try {
-			const snap = await getDocs(collection(db, collectionName));
+			const snap = await withTimeout(getDocs(collection(db, collectionName)));
 			return snap.docs.map((d) => ({ id: d.id, ...d.data() } as MasterItem));
 		} catch {
 			console.warn(`[Firestore] getMasterItems(${collectionName}) failed:`, e);

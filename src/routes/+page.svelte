@@ -639,7 +639,7 @@
 					</div>
 				</div>
 			{/each}
-			{:else}
+			{:else if activeTab === 'inventory'}
 				<!-- 全在庫一覧タブ -->
 				{#each data.allItems as item (item.id)}
 					{@const decStep = item.capacity >= 1000 ? 100 : (item.capacity >= 100 ? 10 : 1)}
