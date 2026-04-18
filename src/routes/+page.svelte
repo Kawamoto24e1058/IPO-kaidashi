@@ -55,6 +55,9 @@
 	let pullToRefreshStatus = $state({ pulling: false, offset: 0 });
 	let startY = 0;
 
+	// PWAスタンドアロン判定（ホーム画面から起動かどうか）
+	let isStandalone = $state(true); // デフォルトtrueで初期フラッシュ防止
+
 	async function refreshData() {
 		if (isManualRefreshing) return;
 		isManualRefreshing = true;
@@ -333,7 +336,10 @@
 				if (navigator.vibrate) navigator.vibrate(50);
 				unregisteredBarcode = decodedText;
 				selectedItemIdForBinding = '';
-				isRegisteringModalOpen = true;
+				// スキャナーを先に閉じてから登録モーダルを表示
+				stopScanner().then(() => {
+					isRegisteringModalOpen = true;
+				});
 			}
 		}
 	}
@@ -341,7 +347,7 @@
 	function cancelRegistration() {
 		isRegisteringModalOpen = false;
 		unregisteredBarcode = '';
-		if (html5QrCode) html5QrCode.resume();
+		// スキャナーは登録モード時にスキャン後クローズ済みなので resume 不要
 	}
 
 	function cancelScannerMatch() {
@@ -408,11 +414,10 @@
 
 				isRegisteringModalOpen = false;
 				unregisteredBarcode = '';
-				
+
 				if (navigator.vibrate) navigator.vibrate(50);
 				showPopup('success', '登録完了');
-				
-				if (html5QrCode) html5QrCode.resume();
+				// スキャナーは登録モード時にスキャン後クローズ済みなので resume 不要
 			} else {
 				alert('登録に失敗しました。');
 			}
@@ -423,6 +428,14 @@
 			isRegistering = false;
 		}
 	}
+
+	onMount(() => {
+		// ホーム画面から起動（スタンドアロン）かどうかを判定
+		const standalone =
+			(window.navigator as any).standalone === true ||
+			window.matchMedia('(display-mode: standalone)').matches;
+		isStandalone = standalone;
+	});
 
 	onDestroy(() => {
 		stopScanner();
@@ -456,6 +469,26 @@
 			<span>{pullToRefreshStatus.offset > 60 ? '受取中...' : '引っ張って更新'}</span>
 		</div>
 	</div>
+
+	<!-- ホーム画面追加を促すバナー（Safariで表示中の場合） -->
+	{#if !isStandalone}
+		<div class="sticky top-0 z-40 bg-[#0071E3]/95 px-4 py-3 backdrop-blur-sm">
+			<div class="mx-auto flex max-w-md items-center justify-between gap-3">
+				<div class="flex items-center gap-2 text-sm font-medium text-white">
+					<span class="text-base">📱</span>
+					<span>ホーム画面に追加するとアドレスバーが消えてアプリのように使えます</span>
+				</div>
+				<button
+					onclick={() => isStandalone = true}
+					class="shrink-0 text-white/70 text-lg leading-none active:text-white"
+					aria-label="閉じる"
+				>✕</button>
+			</div>
+			<p class="mx-auto mt-1.5 max-w-md text-center text-xs text-white/70">
+				Safariの <span class="font-semibold">共有ボタン（□↑）→「ホーム画面に追加」</span>
+			</p>
+		</div>
+	{/if}
 
 	<!-- Firestoreバックアップ利用中バナー -->
 	{#if data.dataSource === 'firestore'}
