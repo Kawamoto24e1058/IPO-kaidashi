@@ -1,12 +1,9 @@
 import { Client, isFullDatabase } from '@notionhq/client';
 import { env } from '$env/dynamic/private';
-import { backupInventory, getInventoryBackup, getMasterItems } from '$lib/firestore';
+import { backupInventory, getInventoryBackup } from '$lib/firestore';
 
 export async function load() {
 	const notion = new Client({ auth: env.NOTION_API_KEY });
-
-	// マスターデータはNotionとは独立してFirestoreから常に取得
-	const masterItemsPromise = getMasterItems('menus').catch(() => []);
 
 	try {
 		const db = await notion.databases.retrieve({ database_id: env.NOTION_DATABASE_ID as string });
@@ -61,27 +58,20 @@ export async function load() {
 		// Notion取得成功 → バックグラウンドでFirestoreにバックアップ（awaithしない）
 		backupInventory(items);
 
-		const [masterItems] = await Promise.all([masterItemsPromise]);
-
 		return {
 			allItems: items,
-			masterItems,
 			dataSource: 'notion' as const
 		};
 	} catch (error) {
 		console.error('Notion API Error:', error);
 
 		// Notion失敗 → Firestoreのバックアップから自動フォールバック
-		const [backup, masterItems] = await Promise.all([
-			getInventoryBackup(),
-			masterItemsPromise
-		]);
+		const backup = await getInventoryBackup();
 
 		if (backup) {
 			console.log(`[Firestore] フォールバック成功: ${backup.updatedAt?.toISOString() ?? '不明'} 時点のバックアップを使用`);
 			return {
 				allItems: backup.items,
-				masterItems,
 				dataSource: 'firestore' as const,
 				backupDate: backup.updatedAt?.toISOString() ?? null
 			};
@@ -89,7 +79,6 @@ export async function load() {
 
 		return {
 			allItems: [],
-			masterItems,
 			dataSource: 'error' as const,
 			error: 'データの取得に失敗しました。サーバーのログを確認してください。'
 		};

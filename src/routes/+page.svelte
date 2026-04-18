@@ -17,13 +17,7 @@
 	let isUpdating = $state(false);
 
 	// タブナビゲーション
-	let activeTab = $state<'shopping' | 'inventory' | 'master'>('shopping');
-
-	// マスターデータ
-	let masterItems = $state<any[]>(data.masterItems || []);
-	let isAddingMasterItem = $state(false);
-	let isSubmittingMasterItem = $state(false);
-	let masterForm = $state({ name: '', category: '', price: 0, notes: '' });
+	let activeTab = $state<'shopping' | 'inventory'>('shopping');
 
 	// インライン編集
 	let editingStockId = $state<string | null>(null);
@@ -430,50 +424,6 @@
 		}
 	}
 
-	// ─── マスターデータ操作 ──────────────────────
-	async function handleAddMasterItem() {
-		if (!masterForm.name) return;
-		isSubmittingMasterItem = true;
-		try {
-			const res = await fetch('/api/master', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ collection: 'menus', data: { ...masterForm } })
-			});
-			if (res.ok) {
-				const { id } = await res.json();
-				masterItems = [...masterItems, { id, ...masterForm }];
-				masterForm = { name: '', category: '', price: 0, notes: '' };
-				isAddingMasterItem = false;
-				showPopup('success', '追加しました');
-			} else {
-				showPopup('error', '追加に失敗しました');
-			}
-		} catch {
-			showPopup('error', 'エラーが発生しました');
-		} finally {
-			isSubmittingMasterItem = false;
-		}
-	}
-
-	async function handleDeleteMasterItem(id: string) {
-		try {
-			const res = await fetch('/api/master', {
-				method: 'DELETE',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ collection: 'menus', id })
-			});
-			if (res.ok) {
-				masterItems = masterItems.filter(i => i.id !== id);
-				showPopup('success', '削除しました');
-			} else {
-				showPopup('error', '削除に失敗しました');
-			}
-		} catch {
-			showPopup('error', 'エラーが発生しました');
-		}
-	}
-
 	onDestroy(() => {
 		stopScanner();
 	});
@@ -561,12 +511,6 @@
 				class="flex-1 rounded-lg py-2.5 text-[13px] font-bold transition-all {activeTab === 'inventory' ? 'bg-white text-[#0071E3] shadow-sm' : 'text-gray-500 hover:text-gray-700'}"
 			>
 				在庫一覧
-			</button>
-			<button
-				onclick={() => activeTab = 'master'}
-				class="flex-1 rounded-lg py-2.5 text-[13px] font-bold transition-all {activeTab === 'master' ? 'bg-white text-[#0071E3] shadow-sm' : 'text-gray-500 hover:text-gray-700'}"
-			>
-				マスター
 			</button>
 		</div>
 
@@ -704,44 +648,6 @@
 						</div>
 					</div>
 				{/each}
-		{:else if activeTab === 'master'}
-			<!-- マスターデータ（メニュー管理） -->
-			<div class="space-y-3">
-				{#if masterItems.length === 0 && !isAddingMasterItem}
-					<div class="mt-10 text-center text-[#86868B]">
-						<p class="text-5xl mb-4">📋</p>
-						<p>まだデータがありません</p>
-						<p class="text-xs mt-1">右下の＋ボタンから追加できます</p>
-					</div>
-				{/if}
-
-				{#each masterItems as item (item.id)}
-					<div class="flex items-start justify-between rounded-2xl bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
-						<div class="flex-1 pr-3">
-							<div class="flex items-center gap-2">
-								<h2 class="text-base font-semibold leading-tight">{item.name}</h2>
-								{#if item.category}
-									<span class="rounded-full bg-[#F5F5F7] px-2 py-0.5 text-xs font-medium text-[#86868B]">{item.category}</span>
-								{/if}
-							</div>
-							{#if item.price}
-								<p class="mt-1 text-sm text-[#0071E3] font-medium">¥{item.price.toLocaleString()}</p>
-							{/if}
-							{#if item.notes}
-								<p class="mt-1 text-xs text-[#86868B]">{item.notes}</p>
-							{/if}
-						</div>
-						<button
-							onclick={() => handleDeleteMasterItem(item.id)}
-							class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F5F5F7] text-[#86868B] transition-all active:scale-90 active:bg-rose-50 active:text-rose-500"
-						>
-							<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-							</svg>
-						</button>
-					</div>
-				{/each}
-			</div>
 		{/if}
 		</div>
 	</div>
@@ -784,14 +690,6 @@
 			onclick={() => isAddingNewItem = true}
 			class="fixed bottom-32 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#0071E3] text-3xl font-light text-white shadow-[0_4px_14px_rgba(0,113,227,0.4)] transition-all hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,113,227,0.5)] active:scale-90 select-none pointer-events-auto pb-1"
 			aria-label="新しい商品を追加"
-		>
-			＋
-		</button>
-	{:else if activeTab === 'master'}
-		<button
-			onclick={() => isAddingMasterItem = true}
-			class="fixed bottom-32 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#0071E3] text-3xl font-light text-white shadow-[0_4px_14px_rgba(0,113,227,0.4)] transition-all hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,113,227,0.5)] active:scale-90 select-none pointer-events-auto pb-1"
-			aria-label="マスターアイテムを追加"
 		>
 			＋
 		</button>
@@ -1073,66 +971,4 @@
 					</div>
 				{/if}
 
-	<!-- マスターアイテム追加モーダル -->
-	{#if isAddingMasterItem}
-		<div
-			transition:fade={{ duration: 200 }}
-			class="fixed inset-0 z-100 flex items-end justify-center bg-black/60 p-0 backdrop-blur-sm sm:items-center sm:p-4"
-			onclick={() => isAddingMasterItem = false}
-			role="button"
-			tabindex="0"
-			onkeydown={(e) => { if (e.key === 'Escape') isAddingMasterItem = false }}
-		>
-			<div
-				transition:fly={{ y: 300, duration: 400, easing: cubicOut }}
-				class="w-full max-w-lg overflow-y-auto rounded-t-[32px] bg-white p-8 pb-12 shadow-2xl sm:rounded-2xl sm:pb-8"
-				onclick={(e) => e.stopPropagation()}
-				role="none"
-			>
-				<div class="mb-4 flex justify-center sm:hidden">
-					<div class="h-1.5 w-12 rounded-full bg-gray-300"></div>
-				</div>
-				<h2 class="mb-6 text-2xl font-bold">メニューを追加</h2>
-				<div class="space-y-4">
-					<div>
-						<label class="mb-1.5 block text-sm font-medium text-[#86868B]">名前 <span class="text-rose-500">*</span></label>
-						<input type="text" bind:value={masterForm.name} placeholder="例: アイスコーヒー"
-							class="w-full rounded-xl bg-[#F5F5F7] px-4 py-3 text-[15px] outline-none focus:ring-2 focus:ring-[#0071E3]/50" />
-					</div>
-					<div>
-						<label class="mb-1.5 block text-sm font-medium text-[#86868B]">カテゴリ</label>
-						<input type="text" bind:value={masterForm.category} placeholder="例: ドリンク、フード"
-							class="w-full rounded-xl bg-[#F5F5F7] px-4 py-3 text-[15px] outline-none focus:ring-2 focus:ring-[#0071E3]/50" />
-					</div>
-					<div>
-						<label class="mb-1.5 block text-sm font-medium text-[#86868B]">価格（円）</label>
-						<input type="number" bind:value={masterForm.price} placeholder="例: 500" min="0"
-							class="w-full rounded-xl bg-[#F5F5F7] px-4 py-3 text-[15px] outline-none focus:ring-2 focus:ring-[#0071E3]/50" />
-					</div>
-					<div>
-						<label class="mb-1.5 block text-sm font-medium text-[#86868B]">メモ</label>
-						<textarea bind:value={masterForm.notes} placeholder="備考など" rows="2"
-							class="w-full rounded-xl bg-[#F5F5F7] px-4 py-3 text-[15px] outline-none focus:ring-2 focus:ring-[#0071E3]/50 resize-none"></textarea>
-					</div>
-				</div>
-				<div class="mt-8 flex gap-3">
-					<button onclick={() => isAddingMasterItem = false}
-						class="flex-1 rounded-2xl bg-[#F5F5F7] py-4 text-lg font-medium text-[#1D1D1F] transition-all active:scale-95">
-						キャンセル
-					</button>
-					<button onclick={handleAddMasterItem}
-						disabled={!masterForm.name || isSubmittingMasterItem}
-						class="flex-2 flex items-center justify-center gap-2 rounded-2xl bg-[#0071E3] py-4 text-lg font-bold text-white transition-all active:scale-95 disabled:opacity-50 shadow-[0_4px_14px_rgba(0,113,227,0.3)]">
-						{#if isSubmittingMasterItem}
-							<svg class="h-5 w-5 animate-spin text-white" viewBox="0 0 24 24">
-								<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
-								<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-16 0z"></path>
-							</svg>
-						{/if}
-						追加する
-					</button>
-				</div>
-			</div>
-		</div>
-	{/if}
 	</div>
