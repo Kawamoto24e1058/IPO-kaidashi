@@ -22,6 +22,10 @@
 	let buyAmounts: Record<string, number> = $state({});
 	let isUpdating = $state(false);
 
+	// 補充数のインライン編集
+	let editingBuyAmountId = $state<string | null>(null);
+	let editBuyAmountValue = $state<number>(0);
+
 	// タブナビゲーション
 	let activeTab = $state<'shopping' | 'inventory'>('shopping');
 
@@ -111,6 +115,19 @@
 		popupTimeout = setTimeout(() => {
 			popupFeedback = { type: null };
 		}, 1200); // メッセージを読む時間を確保
+	}
+
+	// 補充数を直接編集して確定
+	function saveBuyAmount(itemId: string) {
+		const value = Math.max(0, Math.round(editBuyAmountValue));
+		if (value === 0) {
+			const next = { ...buyAmounts };
+			delete next[itemId];
+			buyAmounts = next;
+		} else {
+			buyAmounts[itemId] = value;
+		}
+		editingBuyAmountId = null;
 	}
 
 	// 今回買った分を追加
@@ -606,7 +623,21 @@
 										<p class="text-[#86868B]">
 											現在庫: <span class="font-medium text-[#1D1D1F]">{displayStock}</span> {item.unit}
 											{#if currentAdded > 0}
-												<span class="ml-1 font-bold text-[#0071E3]">(+{currentAdded})</span>
+												{#if editingBuyAmountId === item.id}
+													<input
+														use:focusAndSelect
+														type="number"
+														bind:value={editBuyAmountValue}
+														onblur={() => saveBuyAmount(item.id)}
+														onkeydown={(e) => { if (e.key === 'Enter') saveBuyAmount(item.id) }}
+														class="ml-1 w-14 rounded-lg bg-blue-50 px-1.5 py-0.5 text-center text-sm font-bold text-[#0071E3] outline-none ring-2 ring-[#0071E3]/40"
+													/>
+												{:else}
+													<button
+														onclick={() => { editingBuyAmountId = item.id; editBuyAmountValue = currentAdded; }}
+														class="ml-1 rounded-full bg-blue-50 px-2 py-0.5 text-sm font-bold text-[#0071E3] active:bg-blue-100 transition-colors"
+													>+{currentAdded}</button>
+												{/if}
 											{/if}
 										</p>
 										<p class="text-[#86868B]">
@@ -666,7 +697,21 @@
 										<p class="text-[#86868B]">
 											現在庫: <span class="font-medium text-[#1D1D1F]">{displayStock}</span> {item.unit}
 											{#if currentAdded > 0}
-												<span class="ml-1 font-bold text-emerald-600">(+{currentAdded})</span>
+												{#if editingBuyAmountId === item.id}
+													<input
+														use:focusAndSelect
+														type="number"
+														bind:value={editBuyAmountValue}
+														onblur={() => saveBuyAmount(item.id)}
+														onkeydown={(e) => { if (e.key === 'Enter') saveBuyAmount(item.id) }}
+														class="ml-1 w-14 rounded-lg bg-emerald-50 px-1.5 py-0.5 text-center text-sm font-bold text-emerald-600 outline-none ring-2 ring-emerald-400/40"
+													/>
+												{:else}
+													<button
+														onclick={() => { editingBuyAmountId = item.id; editBuyAmountValue = currentAdded; }}
+														class="ml-1 rounded-full bg-emerald-50 px-2 py-0.5 text-sm font-bold text-emerald-600 active:bg-emerald-100 transition-colors"
+													>+{currentAdded}</button>
+												{/if}
 											{/if}
 										</p>
 									</div>
