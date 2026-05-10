@@ -633,7 +633,7 @@
 										class="flex h-12 min-w-[100px] items-center justify-center gap-1 rounded-xl bg-[#0071E3] px-5 text-[17px] font-semibold text-white transition-all active:scale-95 active:bg-[#005BB5] shadow-[0_4px_10px_rgba(0,113,227,0.2)] select-none"
 									>
 										<span class="text-xl leading-none">＋</span>
-										<span>{item.capacity || 1} {item.unit}</span>
+										<span>補充する</span>
 									</button>
 								</div>
 							</div>
@@ -685,7 +685,7 @@
 										class="flex h-12 min-w-[100px] items-center justify-center gap-1 rounded-xl bg-emerald-500 px-5 text-[17px] font-semibold text-white transition-all active:scale-95 active:bg-emerald-600 shadow-[0_4px_10px_rgba(16,185,129,0.2)] select-none"
 									>
 										<span class="text-xl leading-none">＋</span>
-										<span>{item.capacity || 1} {item.unit}</span>
+										<span>補充する</span>
 									</button>
 								</div>
 							</div>
