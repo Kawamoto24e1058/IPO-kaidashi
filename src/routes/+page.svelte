@@ -622,23 +622,6 @@
 									<div class="mt-2 space-y-0.5 text-sm">
 										<p class="text-[#86868B]">
 											現在庫: <span class="font-medium text-[#1D1D1F]">{displayStock}</span> {item.unit}
-											{#if currentAdded > 0}
-												{#if editingBuyAmountId === item.id}
-													<input
-														use:focusAndSelect
-														type="number"
-														bind:value={editBuyAmountValue}
-														onblur={() => saveBuyAmount(item.id)}
-														onkeydown={(e) => { if (e.key === 'Enter') saveBuyAmount(item.id) }}
-														class="ml-1 w-14 rounded-lg bg-blue-50 px-1.5 py-0.5 text-center text-sm font-bold text-[#0071E3] outline-none ring-2 ring-[#0071E3]/40"
-													/>
-												{:else}
-													<button
-														onclick={() => { editingBuyAmountId = item.id; editBuyAmountValue = currentAdded; }}
-														class="ml-1 rounded-full bg-blue-50 px-2 py-0.5 text-sm font-bold text-[#0071E3] active:bg-blue-100 transition-colors"
-													>+{currentAdded}</button>
-												{/if}
-											{/if}
 										</p>
 										<p class="text-[#86868B]">
 											不足分:
@@ -650,22 +633,43 @@
 										</p>
 									</div>
 								</div>
-								<div class="flex shrink-0 items-center gap-2">
+								<div class="flex shrink-0 items-center">
 									{#if currentAdded > 0}
+										<!-- ステッパー -->
+										<div class="flex items-center gap-1 rounded-2xl bg-[#F5F5F7] p-1">
+											<button
+												onclick={() => handleManualUndo(item.id, item.capacity)}
+												class="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-2xl font-medium text-[#86868B] shadow-sm transition-all active:scale-90 select-none"
+											>−</button>
+											{#if editingBuyAmountId === item.id}
+												<input
+													use:focusAndSelect
+													type="number"
+													bind:value={editBuyAmountValue}
+													onblur={() => saveBuyAmount(item.id)}
+													onkeydown={(e) => { if (e.key === 'Enter') saveBuyAmount(item.id) }}
+													class="w-12 bg-transparent text-center text-xl font-bold text-[#0071E3] outline-none"
+												/>
+											{:else}
+												<button
+													onclick={() => { editingBuyAmountId = item.id; editBuyAmountValue = currentAdded; }}
+													class="w-12 text-center text-xl font-bold text-[#0071E3] select-none"
+												>{currentAdded}</button>
+											{/if}
+											<button
+												onclick={() => handleManualAdd(item)}
+												class="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0071E3] text-2xl font-medium text-white shadow-sm transition-all active:scale-90 select-none"
+											>＋</button>
+										</div>
+									{:else}
 										<button
-											onclick={() => handleManualUndo(item.id, item.capacity)}
-											class="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F5F5F7] text-2xl font-medium text-[#86868B] transition-all active:scale-95 active:bg-[#E5E5E7] select-none"
+											onclick={() => handleManualAdd(item)}
+											class="flex h-12 min-w-[100px] items-center justify-center gap-1 rounded-xl bg-[#0071E3] px-5 text-[17px] font-semibold text-white transition-all active:scale-95 active:bg-[#005BB5] shadow-[0_4px_10px_rgba(0,113,227,0.2)] select-none"
 										>
-											−
+											<span class="text-xl leading-none">＋</span>
+											<span>補充する</span>
 										</button>
 									{/if}
-									<button
-										onclick={() => handleManualAdd(item)}
-										class="flex h-12 min-w-[100px] items-center justify-center gap-1 rounded-xl bg-[#0071E3] px-5 text-[17px] font-semibold text-white transition-all active:scale-95 active:bg-[#005BB5] shadow-[0_4px_10px_rgba(0,113,227,0.2)] select-none"
-									>
-										<span class="text-xl leading-none">＋</span>
-										<span>補充する</span>
-									</button>
 								</div>
 							</div>
 						{/each}
@@ -696,42 +700,46 @@
 									<div class="mt-2 text-sm">
 										<p class="text-[#86868B]">
 											現在庫: <span class="font-medium text-[#1D1D1F]">{displayStock}</span> {item.unit}
-											{#if currentAdded > 0}
-												{#if editingBuyAmountId === item.id}
-													<input
-														use:focusAndSelect
-														type="number"
-														bind:value={editBuyAmountValue}
-														onblur={() => saveBuyAmount(item.id)}
-														onkeydown={(e) => { if (e.key === 'Enter') saveBuyAmount(item.id) }}
-														class="ml-1 w-14 rounded-lg bg-emerald-50 px-1.5 py-0.5 text-center text-sm font-bold text-emerald-600 outline-none ring-2 ring-emerald-400/40"
-													/>
-												{:else}
-													<button
-														onclick={() => { editingBuyAmountId = item.id; editBuyAmountValue = currentAdded; }}
-														class="ml-1 rounded-full bg-emerald-50 px-2 py-0.5 text-sm font-bold text-emerald-600 active:bg-emerald-100 transition-colors"
-													>+{currentAdded}</button>
-												{/if}
-											{/if}
 										</p>
 									</div>
 								</div>
-								<div class="flex shrink-0 items-center gap-2">
+								<div class="flex shrink-0 items-center">
 									{#if currentAdded > 0}
+										<!-- ステッパー（ネット） -->
+										<div class="flex items-center gap-1 rounded-2xl bg-[#F5F5F7] p-1">
+											<button
+												onclick={() => handleManualUndo(item.id, item.capacity)}
+												class="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-2xl font-medium text-[#86868B] shadow-sm transition-all active:scale-90 select-none"
+											>−</button>
+											{#if editingBuyAmountId === item.id}
+												<input
+													use:focusAndSelect
+													type="number"
+													bind:value={editBuyAmountValue}
+													onblur={() => saveBuyAmount(item.id)}
+													onkeydown={(e) => { if (e.key === 'Enter') saveBuyAmount(item.id) }}
+													class="w-12 bg-transparent text-center text-xl font-bold text-emerald-600 outline-none"
+												/>
+											{:else}
+												<button
+													onclick={() => { editingBuyAmountId = item.id; editBuyAmountValue = currentAdded; }}
+													class="w-12 text-center text-xl font-bold text-emerald-600 select-none"
+												>{currentAdded}</button>
+											{/if}
+											<button
+												onclick={() => handleManualAdd(item)}
+												class="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500 text-2xl font-medium text-white shadow-sm transition-all active:scale-90 select-none"
+											>＋</button>
+										</div>
+									{:else}
 										<button
-											onclick={() => handleManualUndo(item.id, item.capacity)}
-											class="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F5F5F7] text-2xl font-medium text-[#86868B] transition-all active:scale-95 active:bg-[#E5E5E7] select-none"
+											onclick={() => handleManualAdd(item)}
+											class="flex h-12 min-w-[100px] items-center justify-center gap-1 rounded-xl bg-emerald-500 px-5 text-[17px] font-semibold text-white transition-all active:scale-95 active:bg-emerald-600 shadow-[0_4px_10px_rgba(16,185,129,0.2)] select-none"
 										>
-											−
+											<span class="text-xl leading-none">＋</span>
+											<span>補充する</span>
 										</button>
 									{/if}
-									<button
-										onclick={() => handleManualAdd(item)}
-										class="flex h-12 min-w-[100px] items-center justify-center gap-1 rounded-xl bg-emerald-500 px-5 text-[17px] font-semibold text-white transition-all active:scale-95 active:bg-emerald-600 shadow-[0_4px_10px_rgba(16,185,129,0.2)] select-none"
-									>
-										<span class="text-xl leading-none">＋</span>
-										<span>補充する</span>
-									</button>
 								</div>
 							</div>
 						{/each}
