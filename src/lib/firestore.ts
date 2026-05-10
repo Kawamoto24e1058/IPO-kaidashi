@@ -47,9 +47,11 @@ export type InventoryItem = {
 	stock: number;
 	unit: string;
 	targetStock: number;
+	onlineTargetStock: number;
 	barcode: string;
 	capacity: number;
 	isNeeded: boolean;
+	isNeededOnline: boolean;
 };
 
 export type MasterItem = {

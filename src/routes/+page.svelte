@@ -10,7 +10,13 @@
 
 
 	let { data }: { data: PageData } = $props();
-	let shoppingList = $derived((data.allItems || []).filter(i => i.isNeeded));
+	// スーパー買い出しリスト（スーパー買い物点を下回るもの）
+	let shoppingList = $derived((data.allItems || []).filter((i: any) => i.isNeeded));
+	// ネット買い出しリスト（ネット買い出し点を下回るもの）
+	let onlineShoppingList = $derived((data.allItems || []).filter((i: any) => i.isNeededOnline));
+
+	// 買い出しチャンネル切り替え
+	let shoppingChannel = $state<'super' | 'online'>('super');
 
 	// 入力された「今回買った量」をIDをキーにして保持
 	let buyAmounts: Record<string, number> = $state({});
@@ -553,69 +559,139 @@
 					<div class="mt-10 text-center text-[#86868B]">
 						データが読み込めませんでした。<br />環境変数の設定を確認してください。
 					</div>
-				{:else if shoppingList.length === 0}
-					<div class="mt-10 text-center text-[#86868B]">
-						現在、買い出しが必要な商品はありません。<br />
-						<span class="text-xs">※ 在庫が十分な商品もスキャンしてバーコード登録が可能です。</span>
-						<div class="mt-4 rounded-lg bg-red-50 p-2 text-xs text-red-500 font-mono">
-							デバッグ: 全取得データ数 = {data.allItems?.length || 0}
-						</div>
-					</div>
-				{/if}
-
-				{#each shoppingList as item (item.id)}
-					{@const currentAdded = buyAmounts[item.id] || 0}
-					{@const displayStock = item.stock + currentAdded}
-					{@const shortage = Math.max(0, item.targetStock - displayStock)}
-					<div
-						class="flex items-center justify-between rounded-2xl bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.04)]"
-					>
-						<div class="flex-1 pr-2">
-							<h2 class="text-lg font-medium leading-tight">{item.name}</h2>
-							{#if item.barcode}
-								<p class="text-xs text-[#86868B] mt-0.5 font-mono">
-									JAN: {item.barcode.slice(0, -4)}<span class="font-bold text-[#1D1D1F]">{item.barcode.slice(-4)}</span>
-								</p>
-							{/if}
-							<div class="mt-2 space-y-0.5 text-sm">
-								<p class="text-[#86868B]">
-									現在庫: <span class="font-medium text-[#1D1D1F]">{displayStock}</span> {item.unit}
-									{#if currentAdded > 0}
-										<span class="ml-1 font-bold text-[#0071E3]">(+{currentAdded})</span>
-									{/if}
-								</p>
-								<p class="text-[#86868B]">
-									不足分: 
-									{#if shortage <= 0}
-										<span class="font-medium text-emerald-500">充足</span>
-									{:else}
-										<span class="font-medium text-rose-500">{shortage}</span> {item.unit}
-									{/if}
-								</p>
-							</div>
-						</div>
-
-					<div class="flex shrink-0 items-center gap-2">
-						{#if currentAdded > 0}
-							<!-- マイナス（取り消し）ボタン -->
-							<button
-								onclick={() => handleManualUndo(item.id, item.capacity)}
-								class="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F5F5F7] text-2xl font-medium text-[#86868B] transition-all active:scale-95 active:bg-[#E5E5E7] select-none"
-							>
-								−
-							</button>
-						{/if}
-						<!-- メインの追加ボタン -->
+				{:else}
+					<!-- スーパー / ネット サブタブ -->
+					<div class="flex rounded-xl bg-gray-200/60 p-1 mb-2">
 						<button
-							onclick={() => handleManualAdd(item)}
-							class="flex h-12 min-w-[100px] items-center justify-center gap-1 rounded-xl bg-[#0071E3] px-5 text-[17px] font-semibold text-white transition-all active:scale-95 active:bg-[#005BB5] shadow-[0_4px_10px_rgba(0,113,227,0.2)] select-none"
+							onclick={() => shoppingChannel = 'super'}
+							class="flex-1 rounded-lg py-2 text-[13px] font-bold transition-all {shoppingChannel === 'super' ? 'bg-white text-[#0071E3] shadow-sm' : 'text-gray-500 hover:text-gray-700'}"
 						>
-							<span class="text-xl leading-none">＋</span>
-							<span>{item.capacity || 1} {item.unit}</span>
+							🛒 スーパー
+							{#if shoppingList.length > 0}
+								<span class="ml-1 rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white">{shoppingList.length}</span>
+							{/if}
+						</button>
+						<button
+							onclick={() => shoppingChannel = 'online'}
+							class="flex-1 rounded-lg py-2 text-[13px] font-bold transition-all {shoppingChannel === 'online' ? 'bg-white text-[#0071E3] shadow-sm' : 'text-gray-500 hover:text-gray-700'}"
+						>
+							📦 ネット
+							{#if onlineShoppingList.length > 0}
+								<span class="ml-1 rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white">{onlineShoppingList.length}</span>
+							{/if}
 						</button>
 					</div>
-				</div>
-			{/each}
+
+					<!-- スーパー買い出しリスト -->
+					{#if shoppingChannel === 'super'}
+						{#if shoppingList.length === 0}
+							<div class="mt-10 text-center text-[#86868B]">
+								<p class="text-4xl mb-3">🛒</p>
+								スーパーで買うものはありません
+							</div>
+						{/if}
+						{#each shoppingList as item (item.id)}
+							{@const currentAdded = buyAmounts[item.id] || 0}
+							{@const displayStock = item.stock + currentAdded}
+							{@const shortage = Math.max(0, item.targetStock - displayStock)}
+							<div class="flex items-center justify-between rounded-2xl bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
+								<div class="flex-1 pr-2">
+									<h2 class="text-lg font-medium leading-tight">{item.name}</h2>
+									{#if item.barcode}
+										<p class="text-xs text-[#86868B] mt-0.5 font-mono">
+											JAN: {item.barcode.slice(0, -4)}<span class="font-bold text-[#1D1D1F]">{item.barcode.slice(-4)}</span>
+										</p>
+									{/if}
+									<div class="mt-2 space-y-0.5 text-sm">
+										<p class="text-[#86868B]">
+											現在庫: <span class="font-medium text-[#1D1D1F]">{displayStock}</span> {item.unit}
+											{#if currentAdded > 0}
+												<span class="ml-1 font-bold text-[#0071E3]">(+{currentAdded})</span>
+											{/if}
+										</p>
+										<p class="text-[#86868B]">
+											不足分:
+											{#if shortage <= 0}
+												<span class="font-medium text-emerald-500">充足</span>
+											{:else}
+												<span class="font-medium text-rose-500">{shortage}</span> {item.unit}
+											{/if}
+										</p>
+									</div>
+								</div>
+								<div class="flex shrink-0 items-center gap-2">
+									{#if currentAdded > 0}
+										<button
+											onclick={() => handleManualUndo(item.id, item.capacity)}
+											class="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F5F5F7] text-2xl font-medium text-[#86868B] transition-all active:scale-95 active:bg-[#E5E5E7] select-none"
+										>
+											−
+										</button>
+									{/if}
+									<button
+										onclick={() => handleManualAdd(item)}
+										class="flex h-12 min-w-[100px] items-center justify-center gap-1 rounded-xl bg-[#0071E3] px-5 text-[17px] font-semibold text-white transition-all active:scale-95 active:bg-[#005BB5] shadow-[0_4px_10px_rgba(0,113,227,0.2)] select-none"
+									>
+										<span class="text-xl leading-none">＋</span>
+										<span>{item.capacity || 1} {item.unit}</span>
+									</button>
+								</div>
+							</div>
+						{/each}
+					{/if}
+
+					<!-- ネット買い出しリスト -->
+					{#if shoppingChannel === 'online'}
+						{#if onlineShoppingList.length === 0}
+							<div class="mt-10 text-center text-[#86868B]">
+								<p class="text-4xl mb-3">📦</p>
+								ネットで買うものはありません
+							</div>
+						{/if}
+						{#each onlineShoppingList as item (item.id)}
+							{@const currentAdded = buyAmounts[item.id] || 0}
+							{@const displayStock = item.stock + currentAdded}
+							<div class="flex items-center justify-between rounded-2xl bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
+								<div class="flex-1 pr-2">
+									<div class="flex items-center gap-2 flex-wrap">
+										<h2 class="text-lg font-medium leading-tight">{item.name}</h2>
+										<span class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">要発注</span>
+									</div>
+									{#if item.barcode}
+										<p class="text-xs text-[#86868B] mt-0.5 font-mono">
+											JAN: {item.barcode.slice(0, -4)}<span class="font-bold text-[#1D1D1F]">{item.barcode.slice(-4)}</span>
+										</p>
+									{/if}
+									<div class="mt-2 text-sm">
+										<p class="text-[#86868B]">
+											現在庫: <span class="font-medium text-[#1D1D1F]">{displayStock}</span> {item.unit}
+											{#if currentAdded > 0}
+												<span class="ml-1 font-bold text-emerald-600">(+{currentAdded})</span>
+											{/if}
+										</p>
+									</div>
+								</div>
+								<div class="flex shrink-0 items-center gap-2">
+									{#if currentAdded > 0}
+										<button
+											onclick={() => handleManualUndo(item.id, item.capacity)}
+											class="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F5F5F7] text-2xl font-medium text-[#86868B] transition-all active:scale-95 active:bg-[#E5E5E7] select-none"
+										>
+											−
+										</button>
+									{/if}
+									<button
+										onclick={() => handleManualAdd(item)}
+										class="flex h-12 min-w-[100px] items-center justify-center gap-1 rounded-xl bg-emerald-500 px-5 text-[17px] font-semibold text-white transition-all active:scale-95 active:bg-emerald-600 shadow-[0_4px_10px_rgba(16,185,129,0.2)] select-none"
+									>
+										<span class="text-xl leading-none">＋</span>
+										<span>{item.capacity || 1} {item.unit}</span>
+									</button>
+								</div>
+							</div>
+						{/each}
+					{/if}
+				{/if}
 			{:else if activeTab === 'inventory'}
 				<!-- 全在庫一覧タブ -->
 				{#each data.allItems as item (item.id)}
@@ -628,7 +704,12 @@
 									JAN: {item.barcode.slice(0, -4)}<span class="font-bold text-[#1D1D1F]">{item.barcode.slice(-4)}</span>
 								</p>
 							{/if}
-							<p class="text-[#86868B] text-sm mt-1">買い出し点: {item.targetStock}</p>
+							<p class="text-[#86868B] text-sm mt-1">
+							スーパー: {item.targetStock}
+							{#if item.onlineTargetStock > 0}
+								<span class="ml-2">ネット: {item.onlineTargetStock}</span>
+							{/if}
+						</p>
 						</div>
 						
 						<div class="flex shrink-0 items-center">
